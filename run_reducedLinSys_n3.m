@@ -1,0 +1,221 @@
+clear all, close all; clc
+
+%% Load Model Parameters
+
+run('modelParameters')
+
+%setting cooling water and ambient air temperatures
+theta_c = 10 + 273.15; %[K]
+T_a     = 30 + 273.15; %[K]
+
+%sample time
+Ts = 0.1; %[s]
+
+%length of simulation
+t_final = 10*60; %[s]
+
+%initial states
+theta_0 = T_a;%0 + 273.15; %[K]
+T_0     = T_a;%0 + 273.15; %[K]
+zeta_0  = 0;
+
+%initialization for ode15s
+tspan = 0:Ts:t_final;
+init = [ theta_0  T_0  zeta_0 ];
+
+%option to lower relative tollerence (default 1e-3)
+options = odeset('RelTol',1e-3);
+
+%simulate and plot the iTh WAHE reduced linear system
+for iTh = 1:4
+	
+	K = -[ -0.07538319 -0.03915181 -0.07705162 ];
+	
+	[ t, x ] = ode15s( @(t,x) reducedLinSys_n3( t, x, K, r, R, R_c, a, b, ...
+	                                            iTh, theta_c, T_a, Ts,    ...
+	                                            B, C_w, C_a, V_w, V_a, Q  ), ...
+	                        tspan, init, options                             );
+	
+	%initializing flow and motor speed vectors
+	q = zeros(length(t),1);
+	w = zeros(length(t),1);
+
+	%re-running sim-function in loop to extract flows at each time step
+	for j = 1:length(t)
+  [ ~, q(j), ...
+       w(j)  ] = reducedLinSys_n3( t(j), x(j,:)', K, r, R, R_c, a, b, ...
+	                                 iTh, theta_c, T_a, Ts,             ...
+	                                 B, C_w, C_a, V_w, V_a, Q           );
+	end
+	
+	%saving sim result for each subsystem
+	x_out.(['sub' num2str(iTh)]) = x;
+	t_out.(['sub' num2str(iTh)]) = t;
+	q_out.(['sub' num2str(iTh)]) = q;
+	w_out.(['sub' num2str(iTh)]) = w;
+		
+end
+
+%plot output temperatures (return water and exhaust air)
+figure
+margY = 3;
+tiledlayout(2,2)
+hAx = nexttile;
+plot( t_out.sub1, x_out.sub1(:,1)-273.15 ), hold on
+plot( t_out.sub1, x_out.sub1(:,2)-273.15 )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Temperature [\circC]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub2, x_out.sub2(:,1)-273.15 ), hold on
+plot( t_out.sub2, x_out.sub2(:,2)-273.15 )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Temperature [\circC]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub3, x_out.sub3(:,1)-273.15 ), hold on
+plot( t_out.sub3, x_out.sub3(:,2)-273.15 )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Temperature [\circC]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub4, x_out.sub4(:,1)-273.15 ), hold on
+plot( t_out.sub4, x_out.sub4(:,2)-273.15 )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Temperature [\circC]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+legend( hAx, 'Return Water Temperature, \theta', ...
+             'Exhaust Air Temperature, T',       ...
+             'Location','NorthOutside'           );
+
+%plot water flow
+figure
+margY = .5;
+tiledlayout(2,2)
+nexttile
+plot( t_out.sub1, q_out.sub1(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Flow [m^3/h]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub2, q_out.sub2(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Flow [m^3/h]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub3, q_out.sub3(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Flow [m^3/h]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub4, q_out.sub4(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Flow [m^3/h]')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+
+%plot pump speeds
+figure
+margY = .3;
+tiledlayout(2,2)
+title('Pump Speeds')
+xlabel('time [s]')
+ylabel('Pump Speed []')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub1, w_out.sub1(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Pump Speed []')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub2, w_out.sub2(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Pump Speed []')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub3, w_out.sub3(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Pump Speed []')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+nexttile
+plot( t_out.sub4, w_out.sub4(:,1) )
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Pump Speed []')
+limY = ylim; ylim([ limY(1)-margY limY(2)+margY ])
+
+
+%% Contorl Design
+
+theta_c = 10 + 273.15; %[K]
+T_a     = 30 + 273.15; %[K]
+
+for i = 1:4
+	
+	T_eq = 20 + 273.15; %[K]
+
+	%calculate flow in equilibrium (T_eq is the desired temperature)
+	theta_eq = ( -C_a*Q(i)*( T_a - T_eq ) + B(i)*T_eq )/B(i);
+
+	%calculate return water temperature in equilibrium
+	q_eq = B(i)*(theta_eq - T_eq)/( C_w*(theta_c - theta_eq) );
+
+	%AWHE System Matrix (with two integral states)
+	A_lin = [ ...
+	-(q_eq/V_w(i) + B(i)/(C_w*V_w(i)))  B(i)/(C_w*V_w(i))                0  ;
+		B(i)/(C_a*V_a(i))               -(Q(i)/V_a(i) + B(i)/(C_a*V_a(i))) 0  ;
+		0                                 1                                0 ];
+
+	%AWHE Input Matrix
+	B_lin = [ (theta_c - theta_eq)/V_w(i)  ;
+						 0                           ;
+						 0                          ];
+	
+	%calculate controllability matrix
+	calC = [ B_lin  A_lin*B_lin  A_lin^2*B_lin  ];
+
+	
+	fprintf('\nRank of Controllability Matrix is %i\n', rank(calC))
+	disp('A = '),    disp(A_lin)
+	disp('B = '),    disp(B_lin)
+	disp('calC = '), disp(calC)
+	
+	%rref(calC)
+
+	%K = place(A,B,p)
+	%K = [ 0.0813625  -0.20673981 -0.00867699] ];
+	
+end
+
+
+%--------------------------------------------------------------------------
+%Reason for Stabilizing Control Input to i'th AHU
+%
+% 	since 	u = q - q*
+% 	and     u = Kx
+% 	then
+% 	q - q* =  Kx
+% 	q      =  Kx + q* 
+%
+% 	and finally since
+% 	w = aq    with    q =  Kx + q*  as found above
+%		then
+% 	w = a( Kx + q* )
+% 	w = aKx + aq*        (( <--insert expression for q* and
+%		=============           insert expression for theta* into that 
+%                           making it only dependent on T* (set-point)
+%                           and exogenous inputs Ta and Qi both of
+%                           which are required to be constant ))
+%--------------------------------------------------------------------------
+
+
