@@ -31,10 +31,10 @@ for iTh = 1:4
 	
 	K = -[ -0.07538319 -0.03915181 -0.07705162 ];
 	
-	[ t, x ] = ode15s( @(t,x) reducedLinSys_n3( t, x, K, r, R, R_c, a, b, ...
-	                                            iTh, theta_c, T_a, Ts,    ...
-	                                            B, C_w, C_a, V_w, V_a, Q  ), ...
-	                        tspan, init, options                             );
+	[ t, x ] = ode15s( @(t,x) reducedLinSys( t, x, K, r, R, R_c, a, b, ...
+	                                         iTh, theta_c, T_a, Ts,    ...
+	                                         B, C_w, C_a, V_w, V_a, Q  ), ...
+	                     tspan, init, options                             );
 	
 	%initializing flow and motor speed vectors
 	q = zeros(length(t),1);
@@ -43,9 +43,9 @@ for iTh = 1:4
 	%re-running sim-function in loop to extract flows at each time step
 	for j = 1:length(t)
   [ ~, q(j), ...
-       w(j)  ] = reducedLinSys_n3( t(j), x(j,:)', K, r, R, R_c, a, b, ...
-	                                 iTh, theta_c, T_a, Ts,             ...
-	                                 B, C_w, C_a, V_w, V_a, Q           );
+       w(j)  ] = reducedLinSys( t(j), x(j,:)', K, r, R, R_c, a, b, ...
+	                              iTh, theta_c, T_a, Ts,             ...
+	                              B, C_w, C_a, V_w, V_a, Q           );
 	end
 	
 	%saving sim result for each subsystem
@@ -196,26 +196,3 @@ for i = 1:4
 	%K = [ 0.0813625  -0.20673981 -0.00867699] ];
 	
 end
-
-
-%--------------------------------------------------------------------------
-%Reason for Stabilizing Control Input to i'th AHU
-%
-% 	since 	u = q - q*
-% 	and     u = Kx
-% 	then
-% 	q - q* =  Kx
-% 	q      =  Kx + q* 
-%
-% 	and finally since
-% 	w = aq    with    q =  Kx + q*  as found above
-%		then
-% 	w = a( Kx + q* )
-% 	w = aKx + aq*        (( <--insert expression for q* and
-%		=============           insert expression for theta* into that 
-%                           making it only dependent on T* (set-point)
-%                           and exogenous inputs Ta and Qi both of
-%                           which are required to be constant ))
-%--------------------------------------------------------------------------
-
-
