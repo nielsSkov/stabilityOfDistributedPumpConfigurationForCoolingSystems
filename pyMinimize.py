@@ -71,9 +71,9 @@ def BFGS( q, Q, w, R, r, a, b, R_c):
                                              'finite_diff_rel_step': None                   })
     
     q_out     = optResult.x
-    error     = f(q_out)
+    error     = optResult.fun
     
-    return [ q_out[0], q_out[1], q_out[2], q_out[3] ]
+    return [ q_out[0], q_out[1], q_out[2], q_out[3], error ]
 
 
 #Nelder-Mead Simplex algorithm
@@ -130,8 +130,8 @@ def nelderMead( q, Q, w, R, r, a, b, R_c ):
     optResult = optimize.minimize(f, q_init, method='nelder-mead', options={'xatol': 1e-8, 'disp': False})
     
     q_out     = optResult.x
-    error     = f(q_out)
+    error     = optResult.fun
     
-    return [ q_out[0], q_out[1], q_out[2], q_out[3] ]
+    return [ q_out[0], q_out[1], q_out[2], q_out[3], error ]
 
 
