@@ -72,18 +72,18 @@ K = -[ -0.07538319 -0.03915181 -0.07705162 ];
                    tspan, init, options                                 );
 
 %initializing for simulation re-run
-q     = zeros(length(t),4);
-p     = zeros(length(t),4);
-w     = zeros(length(t),4);
-w_err = zeros(length(t),4);
+q   = zeros(length(t),4);
+p   = zeros(length(t),4);
+w   = zeros(length(t),4);
+err = zeros(length(t));
 
 %re-running sim-function in loop to extract parameters at each time step
 for i = 1:length(t)
 
-  [ ~,  q(i,:), ...
-        p(i,:), ...
-        w(i,:), ...
-	  w_err(i,:) ] = simSys_nEq4( t(i), x(i,:)', w_init, T_eq, r, R, R_c, ...
+  [ ~, q(i,:), ...
+       p(i,:), ...
+       w(i,:), ...
+	   err(i)    ] = simSys_nEq4( t(i), x(i,:)', w_init, T_eq, r, R, R_c, ...
                                 a, b, theta_c, T_a, K, conOn,           ...
                                 B, C_w, C_a, V_w, V_a, Q, pth           );
 end
@@ -144,14 +144,20 @@ if plotPumpSpeed
 	        'Location', 'northwest'                        )
 end
 
-if plotPumpSpeed
-	figure
-	plot(t,w_err(:,1)), hold on, plot(t,w_err(:,2))
-	plot(t,w_err(:,3)),          plot(t,w_err(:,4))
-	grid on, grid minor
-	xlabel('time [s]')
-	ylabel('Error in Pump Speed from Optimization, \omega')
-	legend( '\omega_1_{,err}', '\omega_2_{,err}',   ...
-	        '\omega_3_{,err}', '\omega_4_{,err}',   ...
-	        'Location', 'northwest'               )
-end
+figure
+plot(t,err(:,1))
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Optimization Error')
+
+% if plotPumpSpeed
+% 	figure
+% 	plot(t,w_err(:,1)), hold on, plot(t,w_err(:,2))
+% 	plot(t,w_err(:,3)),          plot(t,w_err(:,4))
+% 	grid on, grid minor
+% 	xlabel('time [s]')
+% 	ylabel('Error in Pump Speed from Optimization, \omega')
+% 	legend( '\omega_1_{,err}', '\omega_2_{,err}',   ...
+% 	        '\omega_3_{,err}', '\omega_4_{,err}',   ...
+% 	        'Location', 'northwest'               )
+% end
