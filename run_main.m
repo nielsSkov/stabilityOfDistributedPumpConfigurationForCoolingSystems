@@ -56,7 +56,7 @@ options = odeset('RelTol',1e-3);
 w_init = [ 0 0 0 0 ]';
 
 %switch control on/off
-conOn = 1;
+conOn = 0;
 
 %temperature refference
 T_eq = ones(1,4)*(20 + 273.15);
