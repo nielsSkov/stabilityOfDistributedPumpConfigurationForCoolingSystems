@@ -1,5 +1,9 @@
 clear all, close all; clc; clear classes                                   %#ok<CLCLS>
                                                                            %#ok<*UNRCH>
+run('latexDefaults.m')
+
+figSavePath = 'figures/';
+
 %% Load Model Parameters
 
 run('modelParameters')
@@ -43,7 +47,7 @@ t = 0:h:T_final;
 init = [ theta_0  T_0  ; % for subsystem n == 1
          theta_0  T_0  ; % for subsystem n == 2
          theta_0  T_0  ; % for subsystem n == 3
-         theta_0  T_0 ]; % for subsystem n == 4
+         theta_0  T_0 ]; % for subsystem n == 4 
 
 %switch control on/off
 conOn = 1;
@@ -52,7 +56,8 @@ conOn = 1;
 T_eq = ones(1,4)*(20 + 273.15);
 
 %control gain vector
-K = -[ -0.07538319 -0.03915181 -0.07705162 ];
+%K = -[ -0.07538319  -0.03915181 -0.07705162 ]; %using pole placement
+ K = -[ -0.07791562 -0.01685086 -0.00333333 ];         %using LQR
 
 %initialize flows
 qInit = q;
@@ -160,7 +165,7 @@ for i = 2:length(t)
 	end
 end
 
-%% Plot results
+%% Plot Results and Save
 
 %plot output temperatures (return water and exhaust air)
 figure
@@ -174,12 +179,15 @@ for n = 1:4 %looping through each subsystem
 	set(gca, 'XLimSpec', 'Tight');
 	grid on, grid minor
 	xlabel('time [s]')
-	ylabel('Temperature [\circC]')
-	%ylim([ 0 40 ])
+	labelY = sprintf('T$_%i$ %s', n, '[$^\circ$C]');
+	ylabel(labelY)
 end
-legend( hAx, 'Return Water Temperature, \theta', ...
-             'Exhaust Air Temperature, T',       ...
-             'Location','NorthOutside'           );
+legend( hAx, 'Return Water Temperature, $\theta$', ...
+             'Exhaust Air Temperature, T',         ...
+             'Location','NorthOutside'             );
+
+saveCroppedPdf( gcf, [figSavePath 'outputTemp' '.pdf'] )
+
 
 figure
 tiledlayout(2,2); hAx = nexttile;
@@ -189,12 +197,19 @@ for n = 1:4 %looping through each subsystem
 	plot( t, T_integral(:,n) )
 	
 	set(gca, 'XLimSpec', 'Tight');
+	
+	if n == 1, limY = ylim; end,  ylim([ limY(1) limY(2)+10 ])
+
 	grid on, grid minor
 	xlabel('time [s]')
-	ylabel('Temperature [\circC]')
+	labelY = sprintf('$\\int$ T$_%i - $T$_%i$%s d$t$', n, n, '*' );
+	ylabel(labelY)
 end
 legend( hAx, 'Integral State',          ...
              'Location','NorthOutside'  );
+
+saveCroppedPdf( gcf, [figSavePath 'integralState' '.pdf'] )
+
 
 figure
 plot(t,err)
@@ -203,8 +218,17 @@ grid on, grid minor
 xlabel('time [s]')
 ylabel('Optimization Error')
 
+saveCroppedPdf( gcf, [figSavePath 'optError' '.pdf'] )
 
 
+figure
+plot(t,w(:,1)), hold on, plot(t,w(:,2))
+plot(t,w(:,3)),          plot(t,w(:,4))
+grid on, grid minor
+xlabel('time [s]')
+ylabel('Pump Speed, $\omega$')
+legend( '$\omega_1$', '$\omega_2$','$\omega_3$', '$\omega_4$', ...
+				'Location', 'northwest'                        )
 
-
+saveCroppedPdf( gcf, [figSavePath 'pumpSpeed' '.pdf'] )
 
