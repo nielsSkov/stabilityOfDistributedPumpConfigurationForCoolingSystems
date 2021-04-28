@@ -4,7 +4,9 @@
 n = 4;
 
 %ambient temperature
-T_a = 293; % [K]
+T_a = 30 + 273.15; % [K]
+T_aMax = 35 + 273.15;
+T_aMin = 25 + 273.15;
 
 %heat transfer constant between water and air
 B = [ 24000.000  14000.000  12000.000  20000.000 ]; %[J/K]
@@ -24,6 +26,7 @@ q = [ 20.7 12.1 10.4 17.3 ]*1/3600; %[m^3/h]*1/3600 = [m^3/s]
 
 %air flows
 Q = [ 32294.2  18838.3  16147.1  26911.9 ]*1/3600;%[m^3/h]*1/3600 = [m^3/s]
+Qmin = Q*(1/3);
 
 %  singular pertubated systems (S 430)
 

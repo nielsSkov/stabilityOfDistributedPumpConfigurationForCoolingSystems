@@ -6,13 +6,13 @@ clc;
 run('hydraulicCircuit')
 
 % Setup
-T_a = 30 + 273.15+5;                  % Ambient temperature [K]
+T_a = T_a;
 T_r = ones(1,4)*(20 + 273.15);
 % T_r = [293 294 295 296];    % AHU reference air temperatures [K]
 th_c = 10 + 273.15;                 % AHU inflow water temperature [K] 
-Ki = -[ -0.07538319 -0.03915181 -0.07705162 ]*1;
+% Ki = -[ -0.07538319 -0.03915181 -0.07705162 ]*1;
+Ki = -[ -0.07791562 -0.01685086 -0.00333333 ];
 
-Q = Q*0.5;
 % Compute \theta^*_i and q^*_i eq. (7) and (8)
 th_r = zeros(n,1);
 q_r = zeros(n,1);
@@ -23,6 +23,9 @@ G_H = zeros(3*n,n);
 alpha_bar = zeros(n,1);
 rho = zeros(n,1);
 Df_q = zeros(n,n);
+
+% Set flows
+Q = Q;
 
 for i=1:n
     % (7) and (8)
@@ -76,14 +79,16 @@ sysCL_co = ss(F_H_q+G_H*Dg_w*Lambda_bar*K, zeros(3*n),eye(3*n),0);
 
 eig(sysCL_co)
 
-figure
-initial(sysCL_de,x0)
-hold on
-initial(sysCL_co,x0,'r')
-legend('Decoupled','Coupled')
+% figure
+% initial(sysCL_de,x0)
+% hold on
+% initial(sysCL_co,x0,'r')
+% legend('Decoupled','Coupled')
 
 figure
 pzmap(sysCL_de)
 hold on
 pzmap(sysCL_co, 'r')
 legend('Decoupled','Coupled')
+
+
