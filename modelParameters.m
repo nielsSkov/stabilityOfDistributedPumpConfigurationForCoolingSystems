@@ -1,5 +1,11 @@
 %% Air to Water Heat Exchanger Parameters
 
+%number of AHU
+n = 4;
+
+%ambient temperature
+T_a = 293; % [K]
+
 %heat transfer constant between water and air
 B = [ 24000.000  14000.000  12000.000  20000.000 ]; %[J/K]
 
@@ -59,9 +65,9 @@ n_num = 1;                           %[-] nominal pump speed
 
 % Pump and pipe parameters
 
-R = zeros(1,4);
-a = zeros(1,4);
-b = zeros(1,4);
+R = zeros(1,n);
+a = zeros(1,n);
+b = zeros(1,n);
 for i=1:length(Pzones)
   R(i) = Dp_transport/(2*sum(q(i:end))^2);
   b(i) = 2*(2*i*Dp_transport+Dp_heatexchanger)/(n_num^2);
