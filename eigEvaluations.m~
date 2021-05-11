@@ -1,5 +1,5 @@
 clear; 
-close all; 
+%close all; 
 clc;
 
 % Load model parameters
@@ -30,7 +30,7 @@ Df_q = zeros(n,n);
 % Set flows
 Q = Q;
 
-gran = 50;
+gran = 3;
 % Change parameters loop
 Ta = linspace(T_aMin,T_aMax,gran);
 Qq = [linspace(Q(1)/3,Q(1),gran); 
@@ -107,7 +107,13 @@ xlabel('Real Axis')
 ylabel('Imaginary Axis')
 
 figure
-plot(real(eigCou(end,:)), imag(eigCou(end,:)),'-x')
+plot(real(eigCou(2,:)), imag(eigCou(2,:)))
+
+% figure
+% initial(sysCL_de,x0)
+% hold on
+% initial(sysCL_co,x0,'r')
+% legend('Decoupled','Coupled')
 
 figure
 pzmap(sysCL_de)
@@ -116,13 +122,8 @@ pzmap(sysCL_co, 'r')
 legend('Decoupled','Coupled')
 
 figure
-plot(real(eigDecou(:,2)),imag(eigDecou(:,2)),'xb',real(eigCou(:,2)),imag(eigCou(:,2)),'xr')
+plot(real(eigDecou(:,2)),imag(eigDecou(:,2)),'xb',real(eigCou(:,2)),imag(eigCou(:,2)),'xb')
 xlabel('Real Axis')
 ylabel('Imaginary Axis')
-ylim([-2 2])
-grid
-legend('Decoupled','Coupled')
-title('Pole Placement of Nominal System')
-% ,'Location','NorthOutSide','Orientation','Horizontal')
-% legend boxoff
+legend('Decoupled','Coupled',)
 
