@@ -67,20 +67,36 @@ for i=1:length(Pzones)
   b(i) = 2*(2*i*Dp_transport+Dp_heatexchanger)/(n_num^2);
   a(i) = (2*i*Dp_transport+Dp_heatexchanger)/((q(i))^2);
 	r(i) = Dp_heatexchanger/(q(i)^2);
-end 
+end
+
+clear i
 
 %cooler hydraulic resistance (guessed)
 R_c = Dp_heatexchanger/(sum(q(:))^2);
 
-
-
-%% create python model parameter variables
-pth.q = py.list(q);
-pth.Q = py.list(Q);
-pth.R = py.list(R);
-pth.r = py.list(r);
-pth.a = py.list(a);
-pth.b = py.list(b);
+% %% Prep for Python
+% 
+% %add current folder to python search path
+% if count(py.sys.path,'') == 0
+%     insert(py.sys.path,int32(0),'');
+% end
+% 
+% %option to turn python module reload on/off
+% reloadPyMod = 1;
+% 
+% %reload module (this will allow script changes to take effect)
+% if reloadPyMod
+% 	mod = py.importlib.import_module('pyMinimize');
+% 	py.importlib.reload(mod);
+% end
+% 
+% %% create python model parameter variables
+% pth.q = py.list(q);
+% pth.Q = py.list(Q);
+% pth.R = py.list(R);
+% pth.r = py.list(r);
+% pth.a = py.list(a);
+% pth.b = py.list(b);
 
 
 

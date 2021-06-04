@@ -1,19 +1,24 @@
 function saveCroppedPdf( figHandle, fileName )
 	
-	%set figure units to cm (default is pixel, not compatible with papersize)
-	set(figHandle,'Units','centimeters');
+	%check matlab version
+	matVer = ver('MATLAB'); matVer = matVer.Release;
+	releaseYear = sscanf(matVer,'(R%i');
 	
-	%get figure position to measure size of figure (used for cropping of pdf)
-	pos = get(figHandle,'Position');
-	
-	%set figure paper properties
-	set( figHandle, 'PaperPositionMode', 'Auto',  ...
-	                'PaperUnits', 'centimeters',  ...
-	                'PaperSize', [pos(3), pos(4)] )
-	
-	%print cropped figure to pdf
-	print( figHandle, fileName, '-dpdf', '-r0')
-end
+	if matVer=="(R2020b)" || releaseYear >= 2021
+		exportgraphics( figHandle, fileName )
+	else	
+		%set fig units to cm (default is pixel, not compatible with papersize)
+		set(figHandle,'Units','centimeters');
 
-% OBS: with MATLAB version R2021a and later, this is a cleaner solution:
-% exportgraphics( gcf, fileName )
+		%get fig position to measure size of figure (used for cropping of pdf)
+		pos = get(figHandle,'Position');
+
+		%set figure paper properties
+		set( figHandle, 'PaperPositionMode', 'Auto',  ...
+										'PaperUnits', 'centimeters',  ...
+										'PaperSize', [pos(3), pos(4)] )
+
+		%print cropped figure to pdf
+		print( figHandle, fileName, '-dpdf', '-r0')
+	end
+end
