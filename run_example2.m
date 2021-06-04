@@ -2,11 +2,80 @@ clear all, close all; clc; clear classes                                   %#ok<
                                                                            %#ok<*UNRCH>
 run('latexDefaults.m')
 
+%simulation options (select ONE)
+simNoSave  = 0;
+simAndSave = 1;
+loadData   = 0;
+
+%matlab colors
+matRed  = [ 0.85 0.325 0.098 ];
+matBlue = [ 0    0.447 0.741 ];
+
 figSavePath = 'figures/';
 
 %% Load Model Parameters
 
 run('modelParameters')
+
+%variation in air flow
+Q_min  = 1/3*Q;
+Q_midt = 2/3*Q;
+Q_max  = 3/3*Q;
+
+%variation in ambient temperature
+Ta_min  = 25 + 273.15; %[K]
+Ta_midt = 30 + 273.15; %[K]
+Ta_max  = 35 + 273.15; %[K]
+
+%structure for combination of
+% 1: min, 2: midt, 3: max
+% between each of the four Q's
+%
+%create grid of vectors to combine
+[v1, v2, v3, v4] = ndgrid( 1:3, 1:3, 1:3, 1:3 );
+%stack columns of each sub-grid 
+v1 = reshape(v1,[],1);
+v2 = reshape(v2,[],1);
+v3 = reshape(v3,[],1);
+v4 = reshape(v4,[],1);
+%combine vectors to arrive at all combinations of 3 values into 4 places
+combi = [ v1, v2, v3, v4 ];
+
+%substitute values for Q
+v1 = (combi(:,1)==1)*Q_min(1)  + ...
+     (combi(:,1)==2)*Q_midt(1) + ...
+     (combi(:,1)==3)*Q_max(1);
+
+v2 = (combi(:,2)==1)*Q_min(2)  + ...
+     (combi(:,2)==2)*Q_midt(2) + ...
+     (combi(:,2)==3)*Q_max(2);
+
+v3 = (combi(:,3)==1)*Q_min(3)  + ...
+     (combi(:,3)==2)*Q_midt(3) + ...
+     (combi(:,3)==3)*Q_max(3);
+
+v4 = (combi(:,4)==1)*Q_min(4)  + ...
+     (combi(:,4)==2)*Q_midt(4) + ...
+     (combi(:,4)==3)*Q_max(4);
+
+%create combination matrix of variation over airflows Q
+Q_var = [ v1, v2, v3, v4 ];
+
+%% Prep for Python
+
+%add current folder to python search path
+if count(py.sys.path,'') == 0
+    insert(py.sys.path,int32(0),'');
+end
+
+%option to turn python module reload on/off
+reloadPyMod = 1;
+
+%reload module (this will allow script changes to take effect)
+if reloadPyMod
+	mod = py.importlib.import_module('pyMinimize');
+	py.importlib.reload(mod);
+end
 
 %% Simulation Setup
 
@@ -44,11 +113,6 @@ T_eq = ones(1,4)*(16 + 273.15);
 %K = -[ -0.07791562 -0.01685086 -0.00333333 ];         %using LQR
 
 %using LQR
-% K1 = -[ -0.07750724 -0.01797215 -0.00333333 ];
-% K2 = -[ -0.07281985 -0.02400036 -0.00333333 ];
-% K3 = -[ -0.07131688 -0.02596342 -0.00333333 ];
-% K4 = -[ -0.0759679  -0.01994393 -0.00333333 ];
-
 K1 = [ -0.07607165 -0.00605055 -0.00333333 ];
 K2 = [ -0.07791738 -0.00879464 -0.00333333 ];
 K3 = [ -0.0779497  -0.00986821 -0.00333333 ];
@@ -64,11 +128,36 @@ w_init = [ .1 .1 .1 .1 ]';
 
 %initialize vectors for discrete sim
 x          = zeros(2,4,length(t));
+x1         = zeros(length(Q_var)*3,4,length(t));
+x2         = zeros(length(Q_var)*3,4,length(t));
 q          = zeros(length(t),4);
 p          = zeros(length(t),4);
 w          = zeros(length(t),4);
 err        = zeros(length(t),1);
 T_integral = zeros(length(t),4);
+
+%decide weather to simulate and save (or load results from mat-file)
+if simNoSave || simAndSave
+
+%% loops through all combinations for each T_a
+T_a = 0;
+lenQ = length(Q_var);
+jj = 0;
+for j = [ 1:lenQ 1:lenQ 1:lenQ ]
+
+progressBar( length(Q_var)*3, 'Running simulations: ' )
+
+jj = jj+1;
+
+if j == 1 && T_a == 0
+	T_a = Ta_min;
+elseif j == 1 && T_a == Ta_min
+	T_a = Ta_midt;
+elseif j == 1 && T_a == Ta_midt
+	T_a = Ta_max;
+end
+
+Q = Q_var(j,:);
 
 %% First Step of Discrete Sim
 
@@ -85,6 +174,9 @@ err(1) = min_out{5};
 
 for n = 1:4 %looping through each subsystem
 	x(:,n,1) = init(n,:)';
+	
+	x1(jj,n,1)  = x(1,n,1);
+	x2(jj,n,1)  = x(2,n,1);
 end
 
 %% Discrete Simulation - Euler's Method
@@ -162,68 +254,29 @@ for i = 2:length(t)
 		                     (Q(n)/V_a(n))*T_a       ];
 		
 		x(1:2,n,i) = x(1:2,n,i-1) + h*f;
+		
+		x1(jj,n,i)  = x(1,n,i);
+		x2(jj,n,i)  = x(2,n,i);
 	end
 end
 
-%% Plot Results and Save
-
-%plot output temperatures (return water and exhaust air)
-figure
-tiledlayout(2,2); hAx = nexttile;
-for n = 1:4 %looping through each subsystem
-	if n > 1, nexttile; end
-	
-	plot( t, squeeze( x(1,n,:) ) - 273.15 ), hold on
-	plot( t, squeeze( x(2,n,:) ) - 273.15 )
-	ylim([0 30])
-	
-	set(gca, 'XLimSpec', 'Tight');
-	grid on, grid minor
-	xlabel('time [s]')
-	labelY = sprintf('Temp. %s', '[$^\circ$C]');
-	ylabel(labelY)
-	leg = { sprintf('$\\theta_%i$', n), sprintf('T$_%i$', n) };
-	legend( leg, 'Location','southeast' );
 end
 
-saveCroppedPdf( gcf, [figSavePath 'outputTemp' '.pdf'] )
+elseif loadData
+	load('dataExample2');
+end
+
+%save data to mat-file
+if simAndSave
+	save('dataExample2.mat','x1','x2');
+end
 
 
-figure
-plot( t, T_integral(:,1) ), hold on, plot( t, T_integral(:,2) )
-plot( t, T_integral(:,3) ),          plot( t, T_integral(:,4) )
-grid on, grid minor
-axis tight
-limY = ylim; ylim([ limY(1) limY(2)+10 ])
-xlabel('time [s]')
-ylabel('$\int$ T$_i - $T$_i$* d$t$')
-legend( '$\zeta_1$', '$\zeta_2$','$\zeta_3$', '$\zeta_4$', ...
-				'Location', 'northeast'                            )
+%% Plot Results and Save
 
-saveCroppedPdf( gcf, [figSavePath 'integralState' '.pdf'] )
+run('plotExample2.m')
 
 
-figure
-plot(t,w(:,1)), hold on, plot(t,w(:,2))
-plot(t,w(:,3)),          plot(t,w(:,4))
-grid on, grid minor
-set(gca, 'XLimSpec', 'Tight');
-xlabel('time [s]')
-ylabel('Pump Speed, $\omega$')
-legend( '$\omega_1$', '$\omega_2$','$\omega_3$', '$\omega_4$', ...
-				'Location', 'northeast'                                )
-
-saveCroppedPdf( gcf, [figSavePath 'pumpSpeed' '.pdf'] )
-
-
-figure
-plot(t,err)
-set(gca, 'XLimSpec', 'Tight');
-grid on, grid minor
-xlabel('time [s]')
-ylabel('Optimization Error')
-
-saveCroppedPdf( gcf, [figSavePath 'optError' '.pdf'] )
 
 
 
