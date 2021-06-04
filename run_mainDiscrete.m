@@ -8,22 +8,6 @@ figSavePath = 'figures/';
 
 run('modelParameters')
 
-%% Prep for Python
-
-%add current folder to python search path
-if count(py.sys.path,'') == 0
-    insert(py.sys.path,int32(0),'');
-end
-
-%option to turn python module reload on/off
-reloadPyMod = 1;
-
-%reload module (this will allow script changes to take effect)
-if reloadPyMod
-	mod = py.importlib.import_module('pyMinimize');
-	py.importlib.reload(mod);
-end
-
 %% Simulation Setup
 
 theta_c = 10 + 273.15; %[K]
@@ -53,11 +37,24 @@ init = [ theta_0  T_0  ; % for subsystem n == 1
 conOn = 1;
 
 %temperature refference
-T_eq = ones(1,4)*(20 + 273.15);
+T_eq = ones(1,4)*(16 + 273.15);
 
 %control gain vector
 %K = -[ -0.07538319  -0.03915181 -0.07705162 ]; %using pole placement
- K = -[ -0.07791562 -0.01685086 -0.00333333 ];         %using LQR
+%K = -[ -0.07791562 -0.01685086 -0.00333333 ];         %using LQR
+
+%using LQR
+% K1 = -[ -0.07750724 -0.01797215 -0.00333333 ];
+% K2 = -[ -0.07281985 -0.02400036 -0.00333333 ];
+% K3 = -[ -0.07131688 -0.02596342 -0.00333333 ];
+% K4 = -[ -0.0759679  -0.01994393 -0.00333333 ];
+
+K1 = [ -0.07607165 -0.00605055 -0.00333333 ];
+K2 = [ -0.07791738 -0.00879464 -0.00333333 ];
+K3 = [ -0.0779497  -0.00986821 -0.00333333 ];
+K4 = [ -0.07698114 -0.00687199 -0.00333333 ];
+
+K_all = [ K1; K2; K3; K4 ];
 
 %initialize flows
 qInit = q;
@@ -121,6 +118,9 @@ for i = 2:length(t)
 						x(2,n,i-1) - T_eq(n)   ;
 					  T_integral(i,n)       ];
 			
+			%select subsystem specific controller
+			K = K_all(n,:);
+			
 			%pump speed (controlled)
 			w(i,n) = K*y + q_eq;
 			
@@ -175,40 +175,45 @@ for n = 1:4 %looping through each subsystem
 	
 	plot( t, squeeze( x(1,n,:) ) - 273.15 ), hold on
 	plot( t, squeeze( x(2,n,:) ) - 273.15 )
+	ylim([0 30])
 	
 	set(gca, 'XLimSpec', 'Tight');
 	grid on, grid minor
 	xlabel('time [s]')
-	labelY = sprintf('T$_%i$ %s', n, '[$^\circ$C]');
+	labelY = sprintf('Temp. %s', '[$^\circ$C]');
 	ylabel(labelY)
+	leg = { sprintf('$\\theta_%i$', n), sprintf('T$_%i$', n) };
+	legend( leg, 'Location','southeast' );
 end
-legend( hAx, 'Return Water Temperature, $\theta$', ...
-             'Exhaust Air Temperature, T',         ...
-             'Location','NorthOutside'             );
 
 saveCroppedPdf( gcf, [figSavePath 'outputTemp' '.pdf'] )
 
 
 figure
-tiledlayout(2,2); hAx = nexttile;
-for n = 1:4 %looping through each subsystem
-	if n > 1, nexttile; end
-	
-	plot( t, T_integral(:,n) )
-	
-	set(gca, 'XLimSpec', 'Tight');
-	
-	if n == 1, limY = ylim; end,  ylim([ limY(1) limY(2)+10 ])
-
-	grid on, grid minor
-	xlabel('time [s]')
-	labelY = sprintf('$\\int$ T$_%i - $T$_%i$%s d$t$', n, n, '*' );
-	ylabel(labelY)
-end
-legend( hAx, 'Integral State',          ...
-             'Location','NorthOutside'  );
+plot( t, T_integral(:,1) ), hold on, plot( t, T_integral(:,2) )
+plot( t, T_integral(:,3) ),          plot( t, T_integral(:,4) )
+grid on, grid minor
+axis tight
+limY = ylim; ylim([ limY(1) limY(2)+10 ])
+xlabel('time [s]')
+ylabel('$\int$ T$_i - $T$_i$* d$t$')
+legend( '$\zeta_1$', '$\zeta_2$','$\zeta_3$', '$\zeta_4$', ...
+				'Location', 'northeast'                            )
 
 saveCroppedPdf( gcf, [figSavePath 'integralState' '.pdf'] )
+
+
+figure
+plot(t,w(:,1)), hold on, plot(t,w(:,2))
+plot(t,w(:,3)),          plot(t,w(:,4))
+grid on, grid minor
+set(gca, 'XLimSpec', 'Tight');
+xlabel('time [s]')
+ylabel('Pump Speed, $\omega$')
+legend( '$\omega_1$', '$\omega_2$','$\omega_3$', '$\omega_4$', ...
+				'Location', 'northeast'                                )
+
+saveCroppedPdf( gcf, [figSavePath 'pumpSpeed' '.pdf'] )
 
 
 figure
@@ -221,14 +226,5 @@ ylabel('Optimization Error')
 saveCroppedPdf( gcf, [figSavePath 'optError' '.pdf'] )
 
 
-figure
-plot(t,w(:,1)), hold on, plot(t,w(:,2))
-plot(t,w(:,3)),          plot(t,w(:,4))
-grid on, grid minor
-xlabel('time [s]')
-ylabel('Pump Speed, $\omega$')
-legend( '$\omega_1$', '$\omega_2$','$\omega_3$', '$\omega_4$', ...
-				'Location', 'northwest'                        )
 
-saveCroppedPdf( gcf, [figSavePath 'pumpSpeed' '.pdf'] )
 
