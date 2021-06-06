@@ -63,9 +63,15 @@ min_idx     = find( ismember(Q_var,Q_min, 'rows'), 1 );
 nominal_idx = find( ismember(Q_var,Q_midt,'rows'), 1 ) + 81;
 max_idx     = find( ismember(Q_var,Q_max, 'rows'), 1 ) + 81*2;
 
+<<<<<<< HEAD
 plot( t, sys1(:,min_idx),     'color', '[0 .65 0]', 'linewidth', 1.4 )
 plot( t, sys1(:,nominal_idx), 'color', matBlue,     'linewidth', 1.4 )
 plot( t, sys1(:,max_idx),     'color', matRed,      'linewidth', 1.4 )
+=======
+plot( t, sys1(:,min_idx),     'color', matRed, 'linewidth', 1.4 )
+plot( t, sys1(:,nominal_idx), 'color', matRed, 'linewidth', 1.4 )
+plot( t, sys1(:,max_idx),     'color', matRed, 'linewidth', 1.4 )
+>>>>>>> c38b8706fa1f50ba613546da32b91c988cb8f6b6
 
 set(gca, 'XLimSpec', 'Tight');
 grid on, grid minor
@@ -82,8 +88,6 @@ legend( ['$T_{a,min} \leq T_a \leq T_{a,max}\ ,\ \ '   ...
         '$T_{a,max}, Q_{max}$'                             )
 
 saveCroppedPdf( gcf, [figSavePath 'example2' '.pdf'] )
-
-
 
 
 figure

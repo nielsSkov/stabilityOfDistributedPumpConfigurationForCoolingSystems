@@ -4,8 +4,13 @@ run('latexDefaults.m')
 
 %simulation options (select ONE)
 simNoSave  = 0;
+<<<<<<< HEAD
 simAndSave = 0;
 loadData   = 1;
+=======
+simAndSave = 1;
+loadData   = 0;
+>>>>>>> c38b8706fa1f50ba613546da32b91c988cb8f6b6
 
 %matlab colors
 matRed  = [ 0.85 0.325 0.098 ];
@@ -86,7 +91,11 @@ T_a     = 30 + 273.15; %[K]
 h = .2; %[s]
 
 %length of simulation
+<<<<<<< HEAD
 T_final = 30*60; %15*60; %[s]
+=======
+T_final = 8*60; %15*60; %[s]
+>>>>>>> c38b8706fa1f50ba613546da32b91c988cb8f6b6
 
 %initial states
 theta_0 = T_a;% 30 + 273.15; %[K]
