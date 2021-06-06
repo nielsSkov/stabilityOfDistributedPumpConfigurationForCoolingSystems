@@ -4,8 +4,8 @@ run('latexDefaults.m')
 
 %simulation options (select ONE)
 simNoSave  = 0;
-simAndSave = 1;
-loadData   = 0;
+simAndSave = 0;
+loadData   = 1;
 
 %matlab colors
 matRed  = [ 0.85 0.325 0.098 ];
