@@ -63,9 +63,9 @@ min_idx     = find( ismember(Q_var,Q_min, 'rows'), 1 );
 nominal_idx = find( ismember(Q_var,Q_midt,'rows'), 1 ) + 81;
 max_idx     = find( ismember(Q_var,Q_max, 'rows'), 1 ) + 81*2;
 
-plot( t, sys1(:,min_idx),     'color', matRed, 'linewidth', 1.4 )
-plot( t, sys1(:,nominal_idx), 'color', matRed, 'linewidth', 1.4 )
-plot( t, sys1(:,max_idx),     'color', matRed, 'linewidth', 1.4 )
+plot( t, sys1(:,min_idx),     'color', '[0 .65 0]', 'linewidth', 1.4 )
+plot( t, sys1(:,nominal_idx), 'color', matBlue,     'linewidth', 1.4 )
+plot( t, sys1(:,max_idx),     'color', matRed,      'linewidth', 1.4 )
 
 set(gca, 'XLimSpec', 'Tight');
 grid on, grid minor
@@ -74,6 +74,15 @@ labelY = sprintf('Temp. %s', '[$^\circ$C]');
 ylabel(labelY)
 %leg = { sprintf('$\\theta_%i$', n) };
 %legend( leg, 'Location','northeast' );
+
+legend( ['$T_{a,min} \leq T_a \leq T_{a,max}\ ,\ \ '   ...
+          'Q_{min}   \leq Q   \leq Q_{max}$'        ], ...
+        '$T_{a,min}, Q_{min}$',                            ...
+        '$T_{a,nom}, Q_{nom}$',                            ...
+        '$T_{a,max}, Q_{max}$'                             )
+
+saveCroppedPdf( gcf, [figSavePath 'example2' '.pdf'] )
+
 
 
 

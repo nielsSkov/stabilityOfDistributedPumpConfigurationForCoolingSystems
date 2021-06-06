@@ -1,5 +1,6 @@
 clear all, close all; clc; clear classes                                   %#ok<CLCLS>
-                                                                           %#ok<*UNRCH>
+oldBar = findall(0,'type','figure','tag','TMWWaitbar'); delete(oldBar);    %#ok<*UNRCH>
+
 run('latexDefaults.m')
 
 %matlab colors
@@ -26,7 +27,7 @@ T_a     = 30 + 273.15; %[K]
 h = .2; %[s]
 
 %length of simulation
-T_final = 20*60; %15*60; %[s]
+T_final = 30*60; %15*60; %[s]
 
 %initial states
 theta_0 = T_a;% 30 + 273.15; %[K]
@@ -58,10 +59,10 @@ T_eq = ones(1,4)*(16 + 273.15);
 %K3 = -[ -0.07131688 -0.02596342 -0.00333333 ];
 %K4 = -[ -0.0759679  -0.01994393 -0.00333333 ];
 
-K1 = [ -0.07607165 -0.00605055 -0.00333333 ];
-%K2 = [ -0.07791738 -0.00879464 -0.00333333 ];
-%K3 = [ -0.0779497  -0.00986821 -0.00333333 ];
-%K4 = [ -0.07698114 -0.00687199 -0.00333333 ];
+K1 = -[ -0.07607165 -0.00605055 -0.00333333 ];
+%K2 = -[ -0.07791738 -0.00879464 -0.00333333 ];
+%K3 = -[ -0.0779497  -0.00986821 -0.00333333 ];
+%K4 = -[ -0.07698114 -0.00687199 -0.00333333 ];
 
 %K_all = [ K1; K2; K3; K4 ];
 
@@ -109,14 +110,28 @@ Ta_rand = Ta_min(1) + (Ta_max(1)-Ta_min(1))*rand(simIterations,1);
 %decide weather to simulate and save (or load results from mat-file)
 if simNoSave || simAndSave
 
-for j = 1:simIterations
+for j = 1:simIterations+3
 
-progressBar( simIterations, 'Running simulations: ' )
+progressBar( simIterations+3, 'Running simulations: ' )
 
 %setting randomized variables
-T_a  = Ta_rand(j);
-Q(1) = Q_rand(j);
+if j <= simIterations
+	T_a  = Ta_rand(j);
+	Q(1) = Q_rand(j);
+elseif j == simIterations+1
+	T_a  = Ta_min;
+	Q(1) = Q_min(1);
+elseif j == simIterations+2 
+	T_a  = Ta_midt;
+	Q(1) = Q_midt(1);
+elseif j == simIterations+3 
+	T_a  = Ta_max;
+	Q(1) = Q_max(1);
+end
 
+%T_a  = 307.24-.0005;
+%Q(1) = 8.9262;
+%T_a  = 3.072395769621278e+02; Q(1) = 8.9262;
 %% First Step of Discrete Sim
 
 q(1) = sqrt( b(1)*w_init(1)^2 / ( r(1) + R_c + 2*R(1) + a(1) ) );
@@ -138,13 +153,13 @@ for i = 2:length(t)
 
 		T_integral(i) = T_integral(i-1) + h*( T_errNow + T_errThen )/2;
 
-		%calculate flow in equilibrium (T_eq is the desired temperature)
+		%calculate return water temperature in equilibrium
 		theta_eq = ( -C_a*Q(1)*( T_a - T_eq(1) ) + B(1)*T_eq(1) )/B(1);
 
-		%calculate return water temperature nn equilibrium
+		%calculate flow in equilibrium
 		q_eq = B(1)*(theta_eq - T_eq(1))/( C_w*(theta_c - theta_eq) );
 
-		%states for calculating controlled punp speed
+		%states for calculating controlled pump speed
 		y = [ x(1,i-1) - theta_eq  ;
 		      x(2,i-1) - T_eq(1)   ;
 		      T_integral(i)       ];
@@ -217,39 +232,45 @@ ylabel(labelY)
 %leg = { sprintf('$\\theta_%i$', 1), sprintf('T$_%i$', 1) };
 %legend( leg, 'Location','southeast' );
 
+saveCroppedPdf( gcf, [figSavePath 'singleAHU_nonlinManySim_1' '.pdf'] )
+
+sys1 = squeeze(x_result(2,:,:) - 273.15);
+
+min1 = min( sys1, [], 2 );
+max1 = max( sys1, [], 2 );
+
+X = [ t'          ;
+			flipud(t') ];
+
+Y_sys1 = [ min1          ;
+				   flipud(max1) ];
+
+figure
+h_fill = fill(X,Y_sys1,[0 .7 0],'edgecolor','none', 'facealpha', '.2');
+hold on
+
+min_idx     = simIterations+1;
+nominal_idx = simIterations+2;
+max_idx     = simIterations+3;
+
+plot( t, sys1(:,min_idx),     'color', '[0 .65 0]', 'linewidth', 1.4 )
+plot( t, sys1(:,nominal_idx), 'color', matBlue,     'linewidth', 1.4 )
+plot( t, sys1(:,max_idx),     'color', matRed,      'linewidth', 1.4 )
+
+set(gca, 'XLimSpec', 'Tight');
+grid on, grid minor
+xlabel('time [s]')
+labelY = sprintf('Temp. %s', '[$^\circ$C]');
+ylabel(labelY)
+
+legend( ['$T_{a,min} \leq T_a \leq T_{a,max}\ ,\ \ '   ...
+          'Q_{min}   \leq Q   \leq Q_{max}$'        ], ...
+        '$T_{a,min}, Q_{min}$',                            ...
+        '$T_{a,nom}, Q_{nom}$',                            ...
+        '$T_{a,max}, Q_{max}$'                             )
 
 
-% min1 = min( x_result(2,:,:), [], 2 );
-% max1 = max( x_result(2,:,:), [], 2 );
-% 
-% 
-% X = [ t'          ;
-% 			flipud(t') ];
-% 
-% Y_sys1 = [ min1'          ;
-% 				   flipud(max1') ];
-% 
-% figure
-% h_fill = fill(X,Y_sys1,[0 .7 0],'edgecolor','none', 'facealpha', '.2');
-% hold on
-% 
-% %min_idx     = find( ismember(Q_var,Q_min, 'rows'), 1 );
-% %nominal_idx = find( ismember(Q_var,Q_midt,'rows'), 1 ) + 81;
-% %max_idx     = find( ismember(Q_var,Q_max, 'rows'), 1 ) + 81*2;
-% 
-% %plot( t, sys1(:,min_idx),     'color', matRed, 'linewidth', 1.4 )
-% %plot( t, sys1(:,nominal_idx), 'color', matRed, 'linewidth', 1.4 )
-% %plot( t, sys1(:,max_idx),     'color', matRed, 'linewidth', 1.4 )
-% 
-% set(gca, 'XLimSpec', 'Tight');
-% grid on, grid minor
-% xlabel('time [s]')
-% labelY = sprintf('Temp. %s', '[$^\circ$C]');
-% ylabel(labelY)
+saveCroppedPdf( gcf, [figSavePath 'singleAHU_nonlinManySim_2' '.pdf'] )
 
 
-
-
-
-
-
+oldBar = findall(0,'type','figure','tag','TMWWaitbar'); delete(oldBar);
