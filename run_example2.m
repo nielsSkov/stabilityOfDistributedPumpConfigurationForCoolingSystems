@@ -5,8 +5,13 @@ run('latexDefaults.m')
 %simulation options (select ONE)
 simNoSave  = 0;
 <<<<<<< HEAD
+<<<<<<< HEAD
 simAndSave = 0;
 loadData   = 1;
+=======
+simAndSave = 1;
+loadData   = 0;
+>>>>>>> c38b8706fa1f50ba613546da32b91c988cb8f6b6
 =======
 simAndSave = 1;
 loadData   = 0;
@@ -92,7 +97,11 @@ h = .2; %[s]
 
 %length of simulation
 <<<<<<< HEAD
+<<<<<<< HEAD
 T_final = 30*60; %15*60; %[s]
+=======
+T_final = 8*60; %15*60; %[s]
+>>>>>>> c38b8706fa1f50ba613546da32b91c988cb8f6b6
 =======
 T_final = 8*60; %15*60; %[s]
 >>>>>>> c38b8706fa1f50ba613546da32b91c988cb8f6b6
