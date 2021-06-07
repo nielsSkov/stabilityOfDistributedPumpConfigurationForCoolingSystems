@@ -17,7 +17,7 @@ T_a     = 30 + 273.15; %[K]
 h = .2; %[s]
 
 %length of simulation
-T_final = 8*60; %15*60; %[s]
+T_final = 30*60; %15*60; %[s]
 
 %initial states
 theta_0 = T_a;% 30 + 273.15; %[K]
@@ -49,7 +49,6 @@ T_eq = ones(1,4)*(16 + 273.15);
 % K3 = -[ -0.07131688 -0.02596342 -0.00333333 ];
 % K4 = -[ -0.0759679  -0.01994393 -0.00333333 ];
 
-<<<<<<< HEAD
 K1 = -[ -0.07607165 -0.00605055 -0.00333333 ];
 K2 = -[ -0.07791738 -0.00879464 -0.00333333 ];
 K3 = -[ -0.0779497  -0.00986821 -0.00333333 ];
@@ -191,30 +190,38 @@ saveCroppedPdf( gcf, [figSavePath 'outputTemp' '.pdf'] )
 
 
 figure
+tiledlayout(1,2);
+nexttile;
 plot( t, T_integral(:,1) ), hold on, plot( t, T_integral(:,2) )
 plot( t, T_integral(:,3) ),          plot( t, T_integral(:,4) )
+axis square
 grid on, grid minor
 axis tight
 limY = ylim; ylim([ limY(1) limY(2)+10 ])
 xlabel('time [s]')
 ylabel('$\int$ T$_i - $T$_i$* d$t$')
 legend( '$\zeta_1$', '$\zeta_2$','$\zeta_3$', '$\zeta_4$', ...
-				'Location', 'northeast'                            )
+        'Location', 'northeast'                            );
 
-saveCroppedPdf( gcf, [figSavePath 'integralState' '.pdf'] )
+%saveCroppedPdf( gcf, [figSavePath 'integralState' '.pdf'] )
 
 
-figure
+nexttile;
 plot(t,w(:,1)), hold on, plot(t,w(:,2))
 plot(t,w(:,3)),          plot(t,w(:,4))
+axis square
 grid on, grid minor
 set(gca, 'XLimSpec', 'Tight');
 xlabel('time [s]')
 ylabel('Pump Speed, $\omega$')
-legend( '$\omega_1$', '$\omega_2$','$\omega_3$', '$\omega_4$', ...
-				'Location', 'northeast'                                )
+leg = legend( '$\omega_1$', '$\omega_2$','$\omega_3$', '$\omega_4$', ...
+              'Location', 'northeast'                                );
+%rect = get(leg, 'Position');
+%rect(1) = .69;
+%rect(2) = .13;
+%set(leg, 'Position', rect)
 
-saveCroppedPdf( gcf, [figSavePath 'pumpSpeed' '.pdf'] )
+saveCroppedPdf( gcf, [figSavePath 'pumpSpeedAndIntegralState' '.pdf'] )
 
 
 figure
